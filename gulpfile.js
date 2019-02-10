@@ -7,17 +7,19 @@ const sass = require('gulp-sass');
 const maps = require('gulp-sourcemaps');
 
 gulp.task("concatScripts", done => {
-    gulp.src([
+    return gulp.src([
         'js/circle/autogrow.js',
         'js/circle/circle.js',
         'js/global.js'])
-    .pipe(concat("app.js"))
-    .pipe(gulp.dest("js"));
-    done();
+        .pipe(maps.init())
+        .pipe(concat("app.js"))
+        .pipe(maps.write('./'))
+        .pipe(gulp.dest("js"));
+        done();
 });
 
 gulp.task("minifyScripts", done => {
-    gulp.src("js/app.js")
+    return gulp.src("js/app.js")
         .pipe(uglify())
         .pipe(rename('app.min.js'))
         .pipe(gulp.dest('js'))
@@ -25,7 +27,7 @@ gulp.task("minifyScripts", done => {
 });
 
 gulp.task('compileSass', done => {
-    gulp.src("sass/global.scss")
+    return gulp.src("sass/global.scss")
         .pipe(maps.init())
         .pipe(sass())
         .pipe(maps.write('./'))
@@ -33,6 +35,10 @@ gulp.task('compileSass', done => {
         done();
 })
 
-gulp.task("default", function() {
-    console.log("the default task")
-});
+gulp.task('watchSass', function() {
+    gulp.watch('scss/**/*.scss', series('compileSass'));
+})
+
+gulp.task("build", gulp.series('concatScripts', 'minifyScripts', 'compileSass'));
+
+gulp.task("default", gulp.series('build'));
