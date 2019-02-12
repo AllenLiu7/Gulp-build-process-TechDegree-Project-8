@@ -5,40 +5,76 @@ const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
 const sass = require('gulp-sass');
 const maps = require('gulp-sourcemaps');
+const cleanCSS = require('gulp-clean-css');
+const image = require('gulp-image');
+const del = require('del');
 
-gulp.task("concatScripts", done => {
-    return gulp.src([
-        'js/circle/autogrow.js',
-        'js/circle/circle.js',
-        'js/global.js'])
-        .pipe(maps.init())
-        .pipe(concat("app.js"))
-        .pipe(maps.write('./'))
-        .pipe(gulp.dest("js"));
-        done();
-});
 
-gulp.task("minifyScripts", done => {
-    return gulp.src("js/app.js")
-        .pipe(uglify())
-        .pipe(rename('app.min.js'))
-        .pipe(gulp.dest('js'))
-        done();
-});
+const paths = {
+    styles: {
+      src: 'sass/**/*.scss',
+      dest: 'dist/styles'
+    },
+    scripts: {
+      src: 'js/**/*.js',
+      dest: 'dist/scripts'
+    },
+    images: {
+        src: 'images/**',
+        dest: 'dist/content'
+      }
+};
 
-gulp.task('compileSass', done => {
-    return gulp.src("sass/global.scss")
-        .pipe(maps.init())
+
+function styles() {
+    return gulp
+        .src(paths.styles.src, {
+            sourcemaps: true
+            })
         .pipe(sass())
-        .pipe(maps.write('./'))
-        .pipe(gulp.dest('css'))
-        done();
-})
+        .pipe(rename({
+            basename: 'all',
+            suffix: '.min'
+            }))
+        .pipe(cleanCSS({debug: true}))
+        .pipe(concat('all.min.css'))
+        .pipe(gulp.dest(paths.styles.dest));
+}
 
-gulp.task('watchSass', function() {
-    gulp.watch('scss/**/*.scss', series('compileSass'));
-})
+function scripts() {
+    return gulp
+        .src(paths.scripts.src, {
+            sourcemaps: true
+        })
+        .pipe(uglify())
+        .pipe(concat('main.min.js'))
+        .pipe(gulp.dest(paths.scripts.dest));
+}
 
-gulp.task("build", gulp.series('concatScripts', 'minifyScripts', 'compileSass'));
+function images() {
+    return gulp
+        .src(paths.images.src)
+        .pipe(image())
+        .pipe(gulp.dest(paths.images.dest));
+}
 
-gulp.task("default", gulp.series('build'));
+
+function watch() {
+    gulp.watch(paths.scripts.src, scripts);
+    gulp.watch(paths.styles.src, styles);
+  }
+
+function clean(cb) {
+    del('dist');
+    cb()
+}
+  
+const build = gulp.parallel(styles, scripts, images, watch);
+  
+gulp.task(build);
+gulp.task('default', build);
+
+exports.styles = styles;
+exports.scripts = scripts;
+exports.images = images;
+exports.clean = clean;
