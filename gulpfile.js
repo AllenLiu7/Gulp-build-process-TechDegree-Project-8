@@ -78,3 +78,4 @@ exports.styles = styles;
 exports.scripts = scripts;
 exports.images = images;
 exports.clean = clean;
+exports.build = build;
