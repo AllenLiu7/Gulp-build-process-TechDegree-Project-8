@@ -8,6 +8,8 @@ const maps = require('gulp-sourcemaps');
 const cleanCSS = require('gulp-clean-css');
 const image = require('gulp-image');
 const del = require('del');
+const webserver = require('gulp-webserver');
+const connect = require('gulp-connect');
 
 
 const paths = {
@@ -38,6 +40,7 @@ function styles() {
             }))
         .pipe(cleanCSS({debug: true}))
         .pipe(concat('all.min.css'))
+        .pipe(maps.write('./'))
         .pipe(gulp.dest(paths.styles.dest));
 }
 
@@ -48,6 +51,7 @@ function scripts() {
         })
         .pipe(uglify())
         .pipe(concat('main.min.js'))
+        .pipe(maps.write('./'))
         .pipe(gulp.dest(paths.scripts.dest));
 }
 
@@ -58,24 +62,31 @@ function images() {
         .pipe(gulp.dest(paths.images.dest));
 }
 
+function server (cb) {
+        connect.server({
+        root: './',
+        port: 3000,
+        livereload: true
+        });
+        cb()
+    };
 
 function watch() {
-    gulp.watch(paths.scripts.src, scripts);
-    gulp.watch(paths.styles.src, styles);
-  }
+        gulp.watch(paths.scripts.src, scripts);
+        gulp.watch(paths.styles.src, styles);
+    }
 
 function clean(cb) {
-    del('dist');
-    cb()
+        del('dist');
+        cb()
 }
-  
-const build = gulp.parallel(styles, scripts, images, watch);
-  
-gulp.task(build);
-gulp.task('default', build);
+
+const build = gulp.series(clean, gulp.parallel(styles, scripts, images));
 
 exports.styles = styles;
 exports.scripts = scripts;
 exports.images = images;
 exports.clean = clean;
+exports.server = server;
 exports.build = build;
+exports.default = gulp.series(build, server, watch);
