@@ -1,4 +1,4 @@
-# TD-project-8
+# Gulp build process practise
 This project is a Gulp build process to prepare the website for deployment.
 
 The build process fulfill the following criteria:
